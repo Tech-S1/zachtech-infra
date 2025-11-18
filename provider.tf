@@ -9,13 +9,13 @@ terraform {
       version = "~> 5.0"
     }
   }
-  cloud { 
-    organization = "ZachTech" 
+  cloud {
+    organization = "ZachTech"
 
-    workspaces { 
-      name = "ZachTech" 
-    } 
-  } 
+    workspaces {
+      name = "ZachTech"
+    }
+  }
 }
 
 provider "cloudflare" {

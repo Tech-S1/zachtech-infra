@@ -1,5 +1,5 @@
 locals {
-  s3_origin_id = "zone-s3-origin"
+  s3_origin_id     = "zone-s3-origin"
   zone_bucket_name = "${var.zone}-${random_uuid.bucket_suffix.result}"
 }
 
