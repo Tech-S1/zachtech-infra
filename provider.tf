@@ -10,10 +10,10 @@ terraform {
     }
   }
   cloud {
-    organization = "ZachTech"
+    organization = "zachtech"
 
     workspaces {
-      name = "ZachTech"
+      name = "zachtech-infra"
     }
   }
 }
