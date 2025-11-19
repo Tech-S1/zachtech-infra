@@ -37,8 +37,8 @@ resource "cloudflare_dns_record" "zone_cert_validation" {
   }
 
   zone_id = data.cloudflare_zone.zachtech.zone_id
-  name    = each.value.name
-  content = each.value.value
+  name    = trimsuffix(each.value.name, ".")
+  content = trimsuffix(each.value.value, ".")
   type    = "CNAME"
   ttl     = 60
   proxied = false
