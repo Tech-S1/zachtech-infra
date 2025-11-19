@@ -130,19 +130,10 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     cached_methods   = ["GET", "HEAD"]
     target_origin_id = local.s3_origin_id
 
-    forwarded_values {
-      query_string = false
-
-      cookies {
-        forward = "none"
-      }
-    }
+    cache_policy_id          = "658327ea-f89d-4fab-a63d-7e88639e58f6"
+    origin_request_policy_id = "88a5eaf4-2fd4-4709-b370-b4c650ea3fcf"
 
     viewer_protocol_policy = "redirect-to-https"
-    min_ttl                = 0
-    default_ttl            = 3600
-    max_ttl                = 86400
-
   }
 
   custom_error_response {
@@ -156,8 +147,6 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     response_code      = 200
     response_page_path = "/index.html"
   }
-
-  price_class = "PriceClass_100"
 
   restrictions {
     geo_restriction {
