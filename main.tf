@@ -118,12 +118,11 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
 
   aliases = [var.zone]
 
-  # TODO: Disabled currently
-  #   logging_config {
-  #     include_cookies = true
-  #     bucket          = "${var.logs_bucket}.s3.amazonaws.com"
-  #     prefix          = "${local.zone_bucket_name}/"
-  #   }
+  logging_config {
+    include_cookies = true
+    bucket          = aws_s3_bucket.logs_bucket.bucket_regional_domain_name
+    prefix          = "${local.zone_bucket_name}/"
+  }
 
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD", "OPTIONS"]
