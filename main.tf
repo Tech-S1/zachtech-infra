@@ -5,6 +5,12 @@ locals {
 
 data "aws_caller_identity" "current" {}
 
+data "aws_wafv2_web_acl" "cloudfront_waf" {
+  provider = aws.us-east-1
+  name     = "CreatedByCloudFront-5bc61d95"
+  scope    = "CLOUDFRONT"
+}
+
 resource "random_uuid" "bucket_suffix" {}
 
 resource "aws_s3_bucket" "zone_bucket" {
@@ -118,11 +124,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
 
   aliases = [var.zone]
 
-  logging_config {
-    include_cookies = true
-    bucket          = aws_s3_bucket.logs_bucket.bucket_regional_domain_name
-    prefix          = "${local.zone_bucket_name}/"
-  }
+  web_acl_id = data.aws_wafv2_web_acl.cloudfront_waf.arn
 
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD", "OPTIONS"]
