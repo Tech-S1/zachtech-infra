@@ -3,8 +3,6 @@ locals {
   zone_bucket_name = "${var.zone}-${random_uuid.bucket_suffix.result}"
 }
 
-data "aws_caller_identity" "current" {}
-
 data "aws_wafv2_web_acl" "cloudfront_waf" {
   provider = aws.us-east-1
   name     = "CreatedByCloudFront-5bc61d95"
@@ -19,56 +17,6 @@ resource "aws_s3_bucket" "zone_bucket" {
 
   tags = merge(var.default_tags, { Domain = var.zone })
 }
-
-resource "aws_s3_bucket" "logs_bucket" {
-  bucket        = "${local.zone_bucket_name}-logs"
-  force_destroy = true
-
-  tags = merge(var.default_tags, { Domain = "logs" })
-}
-
-resource "aws_s3_bucket_lifecycle_configuration" "logs_bucket_7_days" {
-  bucket = aws_s3_bucket.logs_bucket.id
-
-  rule {
-    id     = "7-day"
-    status = "Enabled"
-
-    filter {
-    }
-
-    expiration {
-      days = 7
-    }
-  }
-}
-
-
-resource "aws_s3_bucket_ownership_controls" "logs_bucket_ownership" {
-  bucket = aws_s3_bucket.logs_bucket.id
-
-  rule {
-    object_ownership = "BucketOwnerPreferred"
-  }
-}
-
-resource "aws_s3_bucket_acl" "logs_bucket_acl" {
-  depends_on = [aws_s3_bucket_ownership_controls.logs_bucket_ownership]
-
-  bucket = aws_s3_bucket.logs_bucket.id
-  acl    = "log-delivery-write"
-}
-
-
-resource "aws_s3_bucket_public_access_block" "logs_bucket" {
-  bucket = aws_s3_bucket.logs_bucket.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
 
 resource "aws_s3_bucket_policy" "zone_bucket" {
   bucket = aws_s3_bucket.zone_bucket.id
