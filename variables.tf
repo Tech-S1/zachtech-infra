@@ -4,6 +4,12 @@ variable "zone" {
   description = "Hosted zone for domain"
 }
 
+variable "branch_name" {
+  type        = string
+  default     = "main"
+  description = "Branch name for Amplify deployment"
+}
+
 variable "default_tags" {
   type = map(string)
   default = {

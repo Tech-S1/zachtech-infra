@@ -1,121 +1,46 @@
-locals {
-  s3_origin_id     = "zone-s3-origin"
-  zone_bucket_name = "${var.zone}-${random_uuid.bucket_suffix.result}"
-}
+resource "aws_amplify_app" "zone_app" {
+  name = var.zone
 
-data "aws_wafv2_web_acl" "cloudfront_waf" {
-  provider = aws.us-east-1
-  name     = "CreatedByCloudFront-5bc61d95"
-  scope    = "CLOUDFRONT"
-}
+  enable_branch_auto_build    = false
+  enable_auto_branch_creation = false
 
-resource "random_uuid" "bucket_suffix" {}
+  custom_rule {
+    source = "/<*>"
+    status = "404"
+    target = "/index.html"
+  }
 
-resource "aws_s3_bucket" "zone_bucket" {
-  bucket        = local.zone_bucket_name
-  force_destroy = true
+  custom_rule {
+    source = "</^[^.]+$|\\.(?!(css|gif|ico|jpg|js|png|txt|svg|woff|woff2|ttf|map|json)$)([^.]+$)/>"
+    status = "200"
+    target = "/index.html"
+  }
 
   tags = merge(var.default_tags, { Domain = var.zone })
 }
 
-resource "aws_s3_bucket_policy" "zone_bucket" {
-  bucket = aws_s3_bucket.zone_bucket.id
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "AllowCloudFrontServicePrincipal"
-        Effect = "Allow"
-        Principal = {
-          Service = "cloudfront.amazonaws.com"
-        }
-        Action   = "s3:GetObject"
-        Resource = "${aws_s3_bucket.zone_bucket.arn}/*"
-        Condition = {
-          StringEquals = {
-            "AWS:SourceArn" = aws_cloudfront_distribution.s3_distribution.arn
-          }
-        }
-      }
-    ]
-  })
+resource "aws_amplify_branch" "main" {
+  app_id      = aws_amplify_app.zone_app.id
+  branch_name = var.branch_name
+
+  enable_auto_build = false
+
+  tags = merge(var.default_tags, { Domain = var.zone })
 }
 
-resource "aws_s3_bucket_public_access_block" "zone_bucket" {
-  bucket = aws_s3_bucket.zone_bucket.id
+resource "aws_amplify_domain_association" "zone_domain" {
+  app_id      = aws_amplify_app.zone_app.id
+  domain_name = var.zone
 
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
+  sub_domain {
+    branch_name = aws_amplify_branch.main.branch_name
+    prefix      = ""
+  }
+
+  depends_on = [aws_acm_certificate_validation.zone_cert_validation_wait]
 }
 
-resource "aws_cloudfront_origin_access_control" "default" {
-  name                              = "${local.zone_bucket_name}-oac"
-  description                       = "OAC for ${local.zone_bucket_name}"
-  origin_access_control_origin_type = "s3"
-  signing_behavior                  = "always"
-  signing_protocol                  = "sigv4"
+output "amplify_app_id" {
+  value       = aws_amplify_app.zone_app.id
+  description = "Amplify App ID for GitHub Actions deployment"
 }
-
-resource "aws_cloudfront_distribution" "s3_distribution" {
-  origin {
-    domain_name              = aws_s3_bucket.zone_bucket.bucket_regional_domain_name
-    origin_access_control_id = aws_cloudfront_origin_access_control.default.id
-    origin_id                = local.s3_origin_id
-  }
-
-  enabled             = true
-  is_ipv6_enabled     = true
-  default_root_object = "index.html"
-  comment             = "Dist for ${local.zone_bucket_name}"
-
-  aliases = [var.zone]
-
-  web_acl_id = data.aws_wafv2_web_acl.cloudfront_waf.arn
-
-  default_cache_behavior {
-    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
-    cached_methods   = ["GET", "HEAD"]
-    target_origin_id = local.s3_origin_id
-
-    cache_policy_id          = "658327ea-f89d-4fab-a63d-7e88639e58f6"
-    origin_request_policy_id = "88a5eaf4-2fd4-4709-b370-b4c650ea3fcf"
-
-    viewer_protocol_policy = "redirect-to-https"
-  }
-
-  custom_error_response {
-    error_code         = 403
-    response_code      = 200
-    response_page_path = "/index.html"
-  }
-
-  custom_error_response {
-    error_code         = 404
-    response_code      = 200
-    response_page_path = "/index.html"
-  }
-
-  restrictions {
-    geo_restriction {
-      restriction_type = "whitelist"
-      locations        = ["US", "CA", "GB", "DE"]
-    }
-  }
-
-  viewer_certificate {
-    acm_certificate_arn      = aws_acm_certificate_validation.zone_cert_validation_wait.certificate_arn
-    ssl_support_method       = "sni-only"
-    minimum_protocol_version = "TLSv1.2_2021"
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-
-  tags = merge(var.default_tags, {
-    Domain = var.zone
-  })
-}
-
