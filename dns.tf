@@ -7,7 +7,7 @@ data "cloudflare_zone" "zachtech" {
 resource "cloudflare_dns_record" "zone_a_record" {
   zone_id = data.cloudflare_zone.zachtech.zone_id
   name    = var.zone
-  content = aws_amplify_domain_association.zone_domain.certificate_verification_dns_record
+  content = aws_cloudfront_distribution.s3_distribution.domain_name
   type    = "CNAME"
   ttl     = 60
   proxied = false
