@@ -2,9 +2,23 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended",
-    ":dependencyDashboard"
+    ":dependencyDashboard",
+    ":pinAllDependencies"
   ],
   "minimumReleaseAge": "7 days",
   "commitMessagePrefix": "Renovate: ",
-  "assignees": ["Tech-S1"]
+  "assignees": ["Tech-S1"],
+  "vulnerabilityAlerts": {
+    "enabled": false
+  },
+  "packageRules": [
+    {
+      "groupName": "Terraform",
+      "matchManagers": ["terraform", "terraform-version"]
+    },
+    {
+      "groupName": "GitHub Actions",
+      "matchManagers": ["github-actions"]
+    }
+  ]
 }
