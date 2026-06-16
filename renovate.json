@@ -3,7 +3,7 @@
   "extends": [
     "config:recommended",
     ":dependencyDashboard",
-    ":pinAllDependencies"
+    ":pinAllExceptPeerDependencies"
   ],
   "minimumReleaseAge": "7 days",
   "commitMessagePrefix": "Renovate: ",
