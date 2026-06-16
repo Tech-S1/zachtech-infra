@@ -13,6 +13,7 @@ jobs:
       pull-requests: write
       issues: write
       statuses: write
+      security-events: read
 
     steps:
       - uses: actions/checkout@v4
