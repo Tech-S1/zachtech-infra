@@ -41,8 +41,44 @@ jobs:
       run: terraform fmt -check
 
     - name: Terraform Plan
-      run: terraform plan
+      run: |
+        set +e
+        terraform plan -detailed-exitcode > /tmp/tf.log 2>&1
+        exit_code=$?
+        set -e
+
+        run_url=$(grep -Eo 'https://app\.terraform\.io/app/[^[:space:]]+' /tmp/tf.log | head -1 || true)
+        if [ -n "$run_url" ]; then
+          echo "HCP Terraform run: $run_url"
+        fi
+
+        if [ "$exit_code" -eq 1 ]; then
+          echo "Terraform plan failed"
+          exit 1
+        fi
+
+        if [ "$exit_code" -eq 2 ]; then
+          echo "Terraform plan succeeded with changes"
+        else
+          echo "Terraform plan succeeded with no changes"
+        fi
 
     - name: Terraform Apply
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      run: terraform apply -auto-approve
+      run: |
+        set +e
+        terraform apply -auto-approve > /tmp/tf.log 2>&1
+        exit_code=$?
+        set -e
+
+        run_url=$(grep -Eo 'https://app\.terraform\.io/app/[^[:space:]]+' /tmp/tf.log | head -1 || true)
+        if [ -n "$run_url" ]; then
+          echo "HCP Terraform run: $run_url"
+        fi
+
+        if [ "$exit_code" -ne 0 ]; then
+          echo "Terraform apply failed"
+          exit 1
+        fi
+
+        echo "Terraform apply succeeded"
