@@ -1,6 +1,6 @@
 locals {
   s3_origin_id     = "zone-s3-origin"
-  zone_bucket_name = "${var.zone}-${random_uuid.bucket_suffix.result}"
+  zone_bucket_name = sensitive("${var.zone}-${random_uuid.bucket_suffix.result}")
 }
 
 data "aws_wafv2_web_acl" "cloudfront_waf" {
