@@ -14,12 +14,9 @@ jobs:
       issues: write
       statuses: write
 
-    env:
-      TF_CLI_ARGS_init: -backend=false
-
     steps:
-      - uses: actions/checkout@v4
-      - uses: hashicorp/setup-terraform@v2
+      - uses: actions/checkout@v6
+      - uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: 1.15.0
           terraform_wrapper: false
@@ -31,4 +28,5 @@ jobs:
         env:
           RENOVATE_REPOSITORIES: ${{ github.repository }}
           RENOVATE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TF_CLI_ARGS_init: -backend=false
           RENOVATE_ALLOWED_COMMANDS: '["^terraform init -upgrade -backend=false$", "^terraform providers lock -platform=linux_amd64 -platform=linux_arm64 -platform=darwin_arm64$"]'
