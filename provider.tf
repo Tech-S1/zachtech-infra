@@ -8,7 +8,7 @@ terraform {
     }
     aws = {
       source  = "hashicorp/aws"
-      version = "6.58.0"
+      version = "6.60.0"
     }
     random = {
       source  = "hashicorp/random"
